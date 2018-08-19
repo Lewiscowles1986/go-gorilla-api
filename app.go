@@ -9,7 +9,6 @@ import (
     "net/url"
     "strconv"
 
-    "github.com/satori/go.uuid"
     "github.com/gorilla/mux"
     _ "github.com/lib/pq"
     _ "github.com/mattn/go-sqlite3"
@@ -72,7 +71,8 @@ func (a *App) getProducts(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    l := rest.ProductListingJSONResponse(a.DB, start, count, products)
+    total := repositories.GetProductCount(a.DB)
+    l := rest.ProductListingJSONResponse(a.DB, start, total, count, products)
     rest.RespondWithJSON(w, http.StatusOK, l)
 }
 
@@ -99,11 +99,7 @@ func (a *App) createProduct(w http.ResponseWriter, r *http.Request) {
 
 func (a *App) getProduct(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
-    id, err := uuid.FromString(vars["id"])
-  	if err != nil {
-        rest.RespondWithError(w, http.StatusBadRequest, "Invalid product ID")
-        return
-  	}
+    id := data.ParseUUID(vars["id"])
 
     p, err := repositories.GetProduct(a.DB, id.String());
     if err != nil {
@@ -121,11 +117,7 @@ func (a *App) getProduct(w http.ResponseWriter, r *http.Request) {
 
 func (a *App) updateProduct(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
-    id, err := uuid.FromString(vars["id"])
-  	if err != nil {
-        rest.RespondWithError(w, http.StatusBadRequest, "Invalid product ID")
-        return
-  	}
+    id := data.ParseUUID(vars["id"])
 
     body, err := ioutil.ReadAll(r.Body)
     if err != nil {
@@ -151,13 +143,9 @@ func (a *App) updateProduct(w http.ResponseWriter, r *http.Request) {
 
 func (a *App) deleteProduct(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
-    id, err := uuid.FromString(vars["id"])
-  	if err != nil {
-        rest.RespondWithError(w, http.StatusBadRequest, "Invalid product ID")
-        return
-  	}
+    id := data.ParseUUID(vars["id"])
 
-    err = repositories.DeleteProduct(a.DB, id.String())
+    err := repositories.DeleteProduct(a.DB, id.String())
     if err != nil {
         rest.RespondWithError(w, http.StatusInternalServerError, err.Error())
         return

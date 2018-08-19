@@ -58,7 +58,9 @@ func TestEmptyTable(t *testing.T) {
     req, _ := http.NewRequest("GET", "/products", nil)
     response := executeRequest(req)
 
-    blank := rest.ProductListingJSONResponse(a.DB, 0, 10, make([]data.Product, 0))
+    total := repositories.GetProductCount(a.DB)
+    products := make([]data.Product, 0)
+    blank := rest.ProductListingJSONResponse(a.DB, 0, total, 10, products)
     expected, _ := json.Marshal(blank)
 
     checkResponseCode(t, http.StatusOK, response.Code)

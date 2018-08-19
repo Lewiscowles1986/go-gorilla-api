@@ -6,7 +6,6 @@ import (
     "net/http"
 
     "../data"
-    "../repositories"
 )
 
 type Link struct {
@@ -29,19 +28,17 @@ type Product struct {
     Links   []Link          `json:"links"`
 }
 
-func ProductListingJSONResponse(db *sql.DB, start uint64, count uint8, products []data.Product) ProductListing {
+func ProductListingJSONResponse(db *sql.DB, start, total uint64, count uint8, products []data.Product) ProductListing {
     l := ProductListing{}
     l.Data = products
     l.Limit = count
     l.Offset = start
     l.Count = uint16(len(products))
-    l.Total = repositories.GetProductCount(db)
+    l.Total = total
     l.Links = append(l.Links, Link{Href:"/products", Rel:"first", Type:"GET"})
 
     return l
 }
-
-
 
 func RespondWithError(w http.ResponseWriter, code int, message string) {
     RespondWithJSON(w, code, map[string]string{"error": message})
