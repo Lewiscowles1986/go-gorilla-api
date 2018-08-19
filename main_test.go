@@ -13,6 +13,7 @@ import (
 
     "."
     "./data"
+    "./rest"
     "./repositories"
     "./settings"
 )
@@ -57,10 +58,13 @@ func TestEmptyTable(t *testing.T) {
     req, _ := http.NewRequest("GET", "/products", nil)
     response := executeRequest(req)
 
+    blank := rest.ProductListingJSONResponse(a.DB, 0, 10, make([]data.Product, 0))
+    expected, _ := json.Marshal(blank)
+
     checkResponseCode(t, http.StatusOK, response.Code)
 
-    if body := response.Body.String(); body != "[]" {
-        t.Errorf("Expected an empty array. Got %s", body)
+    if result := response.Body.String(); result != string(expected) {
+        t.Errorf("Expected %s. Got %s", string(expected), result)
     }
 }
 

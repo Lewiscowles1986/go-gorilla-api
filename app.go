@@ -2,11 +2,11 @@ package main
 
 import (
     "database/sql"
-    "encoding/json"
     "fmt"
     "io/ioutil"
     "log"
     "net/http"
+    "net/url"
     "strconv"
 
     "github.com/satori/go.uuid"
@@ -15,6 +15,7 @@ import (
     _ "github.com/mattn/go-sqlite3"
 
     "./data"
+    "./rest"
     "./repositories"
 )
 
@@ -63,51 +64,44 @@ func (a *App) initializeDB() {
 }
 
 func (a *App) getProducts(w http.ResponseWriter, r *http.Request) {
-    count, _ := strconv.Atoi(r.FormValue("count"))
-    start, _ := strconv.Atoi(r.FormValue("start"))
-
-    if count > 10 || count < 1 {
-        count = 10
-    }
-    if start < 0 {
-        start = 0
-    }
+    count, start := getPagingFromRequest(r)
 
     products, err := repositories.GetProducts(a.DB, start, count)
     if err != nil {
-        respondWithError(w, http.StatusInternalServerError, err.Error())
+        rest.RespondWithError(w, http.StatusInternalServerError, err.Error())
         return
     }
 
-    respondWithJSON(w, http.StatusOK, products)
+    l := rest.ProductListingJSONResponse(a.DB, start, count, products)
+    rest.RespondWithJSON(w, http.StatusOK, l)
 }
 
 func (a *App) createProduct(w http.ResponseWriter, r *http.Request) {
     body, err := ioutil.ReadAll(r.Body)
     if err != nil {
-        respondWithError(w, http.StatusBadRequest, "Unable to read request body")
+        rest.RespondWithError(w, http.StatusBadRequest, "Unable to read request body")
     }
     defer r.Body.Close()
 
     p, err := data.ParseProductDataJSON(body)
     if err != nil {
-        respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+        rest.RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
         return
     }
 
     if err := repositories.CreateProduct(a.DB, p); err != nil {
-        respondWithError(w, http.StatusInternalServerError, err.Error())
+        rest.RespondWithError(w, http.StatusInternalServerError, err.Error())
         return
     }
 
-    respondWithJSON(w, http.StatusCreated, p)
+    rest.RespondWithJSON(w, http.StatusCreated, p)
 }
 
 func (a *App) getProduct(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
     id, err := uuid.FromString(vars["id"])
   	if err != nil {
-        respondWithError(w, http.StatusBadRequest, "Invalid product ID")
+        rest.RespondWithError(w, http.StatusBadRequest, "Invalid product ID")
         return
   	}
 
@@ -115,71 +109,78 @@ func (a *App) getProduct(w http.ResponseWriter, r *http.Request) {
     if err != nil {
         switch err {
         case sql.ErrNoRows:
-            respondWithError(w, http.StatusNotFound, "Product not found")
+            rest.RespondWithError(w, http.StatusNotFound, "Product not found")
         default:
-            respondWithError(w, http.StatusInternalServerError, err.Error())
+            rest.RespondWithError(w, http.StatusInternalServerError, err.Error())
         }
         return
     }
 
-    respondWithJSON(w, http.StatusOK, p)
+    rest.RespondWithJSON(w, http.StatusOK, p)
 }
 
 func (a *App) updateProduct(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
     id, err := uuid.FromString(vars["id"])
   	if err != nil {
-        respondWithError(w, http.StatusBadRequest, "Invalid product ID")
+        rest.RespondWithError(w, http.StatusBadRequest, "Invalid product ID")
         return
   	}
 
     body, err := ioutil.ReadAll(r.Body)
     if err != nil {
-        respondWithError(w, http.StatusBadRequest, "Unable to read request body")
+        rest.RespondWithError(w, http.StatusBadRequest, "Unable to read request body")
     }
     defer r.Body.Close()
 
     p, err := data.ParseProductDataJSON(body)
     if err != nil {
-        respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+        rest.RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
         return
     }
 
     err = repositories.UpdateProduct(a.DB, id.String(), p)
     if err != nil {
-        respondWithError(w, http.StatusInternalServerError, err.Error())
+        rest.RespondWithError(w, http.StatusInternalServerError, err.Error())
         return
     }
     m, _ := repositories.GetProduct(a.DB, id.String())
 
-    respondWithJSON(w, http.StatusOK, m)
+    rest.RespondWithJSON(w, http.StatusOK, m)
 }
 
 func (a *App) deleteProduct(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
     id, err := uuid.FromString(vars["id"])
   	if err != nil {
-        respondWithError(w, http.StatusBadRequest, "Invalid product ID")
+        rest.RespondWithError(w, http.StatusBadRequest, "Invalid product ID")
         return
   	}
 
     err = repositories.DeleteProduct(a.DB, id.String())
     if err != nil {
-        respondWithError(w, http.StatusInternalServerError, err.Error())
+        rest.RespondWithError(w, http.StatusInternalServerError, err.Error())
         return
     }
 
-    respondWithJSON(w, http.StatusOK, map[string]string{"result": "success"})
+    rest.RespondWithJSON(w, http.StatusOK, map[string]string{"result": "success"})
 }
 
-func respondWithError(w http.ResponseWriter, code int, message string) {
-    respondWithJSON(w, code, map[string]string{"error": message})
+func getURLQueryParam(r *http.Request, key string) string {
+    return url.QueryEscape(r.URL.Query().Get(key))
 }
 
-func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
-    response, _ := json.Marshal(payload)
+func getPagingFromRequest(r *http.Request) (uint8, uint64) {
+    count, _ := strconv.ParseUint(getURLQueryParam(r, "count"), 10, 8)
+    start, _ := strconv.ParseUint(getURLQueryParam(r, "start"), 10, 64)
 
-    w.Header().Set("Content-Type", "application/json")
-    w.WriteHeader(code)
-    w.Write(response)
+    if count < 1 {
+        count = 10
+    }
+    if count > 250 {
+        count = 250
+    }
+    c := uint8(count)
+
+    return c, start
 }

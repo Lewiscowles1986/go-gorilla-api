@@ -37,7 +37,7 @@ func CreateProduct(db *sql.DB, p data.Product) error {
     return nil
 }
 
-func GetProducts(db *sql.DB, start, count int) ([]data.Product, error) {
+func GetProducts(db *sql.DB, start uint64, count uint8) ([]data.Product, error) {
     rows, err := db.Query(
         "SELECT id, name, price FROM products LIMIT $1 OFFSET $2",
         count, start)
@@ -49,4 +49,14 @@ func GetProducts(db *sql.DB, start, count int) ([]data.Product, error) {
     defer rows.Close()
 
     return data.ParseProductListData(rows)
+}
+
+func GetProductCount(db *sql.DB) uint64 {
+    i := uint64(0)
+    r := db.QueryRow("SELECT COUNT(id) FROM products")
+    err := r.Scan(&i)
+    if err != nil {
+        i = uint64(0)
+    }
+    return i
 }
