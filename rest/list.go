@@ -1,53 +1,53 @@
 package rest
 
 import (
-    "database/sql"
-    "encoding/json"
-    "net/http"
+	"database/sql"
+	"encoding/json"
+	"net/http"
 
-    "../data"
+	"../data"
 )
 
 type Link struct {
-    Href    string          `json:"href"`
-    Rel     string          `json:"rel"`
-    Type    string          `json:"type"`
+	Href string `json:"href"`
+	Rel  string `json:"rel"`
+	Type string `json:"type"`
 }
 
 type ProductListing struct {
-    Data    []data.Product  `json:"data"`
-    Total   uint64          `json:"total"`
-    Count   uint16          `json:"count"`
-    Offset  uint64          `json:"offset"`
-    Limit   uint8          `json:"limit"`
-    Links   []Link          `json:"links"`
+	Data   []data.Product `json:"data"`
+	Total  uint64         `json:"total"`
+	Count  uint8          `json:"count"`
+	Offset uint64         `json:"offset"`
+	Limit  uint8          `json:"limit"`
+	Links  []Link         `json:"links"`
 }
 
 type Product struct {
-    Object  data.Product    `json:"object"`
-    Links   []Link          `json:"links"`
+	Object data.Product `json:"object"`
+	Links  []Link       `json:"links"`
 }
 
 func ProductListingJSONResponse(db *sql.DB, start, total uint64, count uint8, products []data.Product) ProductListing {
-    l := ProductListing{}
-    l.Data = products
-    l.Limit = count
-    l.Offset = start
-    l.Count = uint16(len(products))
-    l.Total = total
-    l.Links = append(l.Links, Link{Href:"/products", Rel:"first", Type:"GET"})
+	l := ProductListing{}
+	l.Data = products
+	l.Limit = count
+	l.Offset = start
+	l.Count = uint8(len(products))
+	l.Total = total
+	l.Links = append(l.Links, Link{Href: "/products", Rel: "first", Type: "GET"})
 
-    return l
+	return l
 }
 
 func RespondWithError(w http.ResponseWriter, code int, message string) {
-    RespondWithJSON(w, code, map[string]string{"error": message})
+	RespondWithJSON(w, code, map[string]string{"error": message})
 }
 
 func RespondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
-    response, _ := json.Marshal(payload)
+	response, _ := json.Marshal(payload)
 
-    w.Header().Set("Content-Type", "application/json")
-    w.WriteHeader(code)
-    w.Write(response)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	w.Write(response)
 }
