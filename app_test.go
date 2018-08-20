@@ -107,6 +107,17 @@ func TestCreateProduct(t *testing.T) {
 	}
 }
 
+func TestCreateProductFailsWithGarbage(t *testing.T) {
+	clearTable()
+
+	payload := []byte(`"garbage"`)
+
+	req, _ := http.NewRequest("POST", "/product", bytes.NewBuffer(payload))
+	response := executeRequest(req)
+
+	checkResponseCode(t, http.StatusBadRequest, response.Code)
+}
+
 func TestGetProduct(t *testing.T) {
 	clearTable()
 
@@ -175,6 +186,25 @@ func TestUpdateProduct(t *testing.T) {
 			originalProduct.GetPrice(), modifiedProduct.GetPrice(),
 			modifiedProduct.GetPrice())
 	}
+}
+
+func TestUpdateProductWithGarbageFails(t *testing.T) {
+	clearTable()
+
+	p := data.CreateProduct("cheap trash", .99)
+	err := repositories.CreateProduct(a.DB, p)
+	if err != nil {
+		t.Errorf("Unable to save initial model to database")
+	}
+
+	payload := []byte(`gibberish`)
+
+	req, _ := http.NewRequest(
+		"PUT", fmt.Sprintf("/product/%s", p.GetID()), bytes.NewBuffer(payload))
+	response := executeRequest(req)
+
+	checkResponseCode(t, http.StatusBadRequest, response.Code)
+
 }
 
 func TestDeleteProductNonExist(t *testing.T) {

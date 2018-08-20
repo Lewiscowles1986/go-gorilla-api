@@ -136,7 +136,8 @@ func (a *App) updateProduct(w http.ResponseWriter, r *http.Request) {
 
 	err = repositories.UpdateProduct(a.DB, id.String(), p)
 	if err != nil {
-		rest.RespondWithError(w, http.StatusInternalServerError, err.Error())
+		rest.RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf(
+			"Unable to save product '%s' with data %+v", id.String(), p))
 		return
 	}
 	m, _ := repositories.GetProduct(a.DB, id.String())
