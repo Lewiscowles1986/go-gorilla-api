@@ -16,8 +16,8 @@ type Listing struct {
 }
 
 type Entry struct {
-	Object string `json:"object"`
-	Links  []Link `json:"links"`
+	Object interface{} `json:"object"`
+	Links  []Link      `json:"links"`
 }
 
 type Link struct {
@@ -39,6 +39,18 @@ func AddHyperMediaLinks(links *[]Link, basePath string, page, total uint64, coun
 		*links = append(*links, GetPageLink(basePath, count, nextPg, "next", "GET"))
 	}
 	*links = append(*links, GetPageLink(basePath, count, pages, "last", "GET"))
+}
+
+func ListingJSONResponse(basePath string, page, total uint64, count uint8, entries []Entry) Listing {
+	l := Listing{}
+	l.Data = entries
+	l.Limit = count
+	l.Page = page
+	l.Count = uint8(len(entries))
+	l.Total = total
+	AddHyperMediaLinks(&l.Links, basePath, page, total, count)
+
+	return l
 }
 
 func GetPageLink(basePath string, count uint8, page uint64, name, method string) Link {

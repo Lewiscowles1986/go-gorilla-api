@@ -1,8 +1,11 @@
 package rest
 
 import (
+	"fmt"
 	"net/http/httptest"
 	"testing"
+
+	"../data"
 )
 
 func TestPagesCountTotalSingle(t *testing.T) {
@@ -138,5 +141,24 @@ func checkCode(t *testing.T, rr *httptest.ResponseRecorder, code int) {
 	responseCode := rr.Code
 	if responseCode != code {
 		t.Fatalf("Expected %d response. Got %d", code, responseCode)
+	}
+}
+
+func TestJSONResponseEntry(t *testing.T) {
+	rr := httptest.NewRecorder()
+	prod := data.CreateProduct("test", 9.99)
+	entry := ProductToEntry(prod)
+	RespondWithJSON(rr, 200, entry)
+
+	checkCode(t, rr, 200)
+	checkHeaders(t, rr, []header{
+		header{Name: "Content-Type", Value: "application/json"}})
+
+	responseBody := rr.Body.String()
+	expectedBody := fmt.Sprintf(
+		`{"object":{"id":"%s","name":"test","price":9.99},"links":null}`,
+		prod.GetID())
+	if responseBody != expectedBody {
+		t.Fatalf("Expected \"%s\" response. Got \"%s\"", expectedBody, responseBody)
 	}
 }

@@ -7,7 +7,8 @@ import (
 )
 
 func TestProductListingJSONResponse(t *testing.T) {
-	result := ProductListingJSONResponse(1, 100, 10, []data.Product{})
+	result := ListingJSONResponse("/products", 1, 100, 10,
+		ProductsToEntries([]data.Product{}))
 	expected := ProductListing{
 		Data:  []data.Product{},
 		Total: 100,
@@ -24,5 +25,41 @@ func TestProductListingJSONResponse(t *testing.T) {
 	}
 	if len(result.Links) != len(expected.Links) {
 		t.Fatalf("Expected %d Got %d", len(expected.Links), len(result.Links))
+	}
+}
+
+func TestProductToEntryEmpty(t *testing.T) {
+	products := []data.Product{}
+
+	results := ProductsToEntries(products)
+	if len(results) != len(products) {
+		t.Fatalf("Both input and output should be zero-length.\n\t%+v", results)
+	}
+}
+
+func TestProductToEntrySingle(t *testing.T) {
+	products := []data.Product{data.CreateProduct("test", 9.99)}
+
+	results := ProductsToEntries(products)
+	if len(results) != len(products) {
+		t.Fatalf("Both input and output should be equal length (1).\n\t%+v", results)
+	}
+}
+
+func TestProductToEntryMultiple(t *testing.T) {
+	products := []data.Product{
+		data.CreateProduct("test1", 9.99),
+		data.CreateProduct("test2", 99.99)}
+
+	results := ProductsToEntries(products)
+	if len(results) != len(products) {
+		t.Fatalf("Both input and output should be equal length (2).\n\t%+v", results)
+	}
+}
+
+func TestProductToEntry(t *testing.T) {
+	entry := ProductToEntry(data.CreateProduct("test", 9.99))
+	if false {
+		t.Fatalf("If it compiles we shouldn't reach this. %+v", entry)
 	}
 }

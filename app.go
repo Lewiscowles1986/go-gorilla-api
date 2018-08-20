@@ -72,7 +72,8 @@ func (a *App) getProducts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	total := repositories.GetProductCount(a.DB)
-	l := rest.ProductListingJSONResponse(page, total, count, products)
+	l := rest.ListingJSONResponse("/products", page, total, count,
+		rest.ProductsToEntries(products))
 	rest.RespondWithJSON(w, http.StatusOK, l)
 }
 
@@ -89,7 +90,8 @@ func (a *App) createProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := repositories.CreateProduct(a.DB, p); err != nil {
+	err = repositories.CreateProduct(a.DB, p)
+	if err != nil {
 		rest.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -107,7 +109,7 @@ func (a *App) getProduct(w http.ResponseWriter, r *http.Request) {
 		case sql.ErrNoRows:
 			rest.RespondWithError(w, http.StatusNotFound, "Product not found")
 		default:
-			rest.RespondWithError(w, http.StatusInternalServerError, err.Error())
+			rest.RespondWithError(w, http.StatusInternalServerError, "Error loading")
 		}
 		return
 	}
@@ -122,6 +124,7 @@ func (a *App) updateProduct(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		rest.RespondWithError(w, http.StatusBadRequest, "Unable to read request body")
+		return
 	}
 	defer r.Body.Close()
 
@@ -145,7 +148,14 @@ func (a *App) deleteProduct(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := data.ParseUUID(vars["id"])
 
-	err := repositories.DeleteProduct(a.DB, id.String())
+	_, err := repositories.GetProduct(a.DB, id.String())
+	if err != nil {
+		rest.RespondWithError(w, http.StatusNotFound, fmt.Sprintf(
+			"Product '%s' not found", id.String()))
+		return
+	}
+
+	err = repositories.DeleteProduct(a.DB, id.String())
 	if err != nil {
 		rest.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return

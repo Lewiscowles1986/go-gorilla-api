@@ -53,7 +53,28 @@ func TestEmptyTable(t *testing.T) {
 
 	total := repositories.GetProductCount(a.DB)
 	products := make([]data.Product, 0)
-	blankListing := rest.ProductListingJSONResponse(0, total, 10, products)
+	blankListing := rest.ListingJSONResponse("/products", 0, total, 10,
+		rest.ProductsToEntries(products))
+
+	expected, _ := json.Marshal(blankListing)
+
+	checkResponseCode(t, http.StatusOK, response.Code)
+
+	if result := response.Body.String(); result != string(expected) {
+		t.Errorf("Expected %s. Got %s", string(expected), result)
+	}
+}
+
+func TestEmptyTableLargeCount(t *testing.T) {
+	clearTable()
+
+	req, _ := http.NewRequest("GET", "/products?count=255", nil)
+	response := executeRequest(req)
+
+	total := repositories.GetProductCount(a.DB)
+	products := make([]data.Product, 0)
+	blankListing := rest.ListingJSONResponse("/products", 0, total, 250,
+		rest.ProductsToEntries(products))
 
 	expected, _ := json.Marshal(blankListing)
 
@@ -156,7 +177,16 @@ func TestUpdateProduct(t *testing.T) {
 	}
 }
 
-func TestDeleteProduct(t *testing.T) {
+func TestDeleteProductNonExist(t *testing.T) {
+	clearTable()
+
+	id := "49458d94-3347-4c3b-a12f-91f2b33fa3ad"
+	req, _ := http.NewRequest("DELETE", fmt.Sprintf("/product/%s", id), nil)
+	response := executeRequest(req)
+	checkResponseCode(t, http.StatusNotFound, response.Code)
+}
+
+func TestDeleteProductExist(t *testing.T) {
 	clearTable()
 
 	p := data.CreateProduct("something we're ashamed of", 500000.00)

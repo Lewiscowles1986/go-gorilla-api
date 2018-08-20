@@ -18,15 +18,15 @@ type Product struct {
 	Links  []Link       `json:"links"`
 }
 
-func ProductListingJSONResponse(page, total uint64, count uint8, products []data.Product) ProductListing {
+func ProductToEntry(product data.Product) Entry {
+	return Entry{Object: product}
+}
 
-	l := ProductListing{}
-	l.Data = products
-	l.Limit = count
-	l.Page = page
-	l.Count = uint8(len(products))
-	l.Total = total
-	AddHyperMediaLinks(&l.Links, "/products", page, total, count)
-
-	return l
+func ProductsToEntries(products []data.Product) []Entry {
+	entries := []Entry{}
+	for _, p := range products {
+		e := ProductToEntry(p)
+		entries = append(entries, e)
+	}
+	return entries
 }
