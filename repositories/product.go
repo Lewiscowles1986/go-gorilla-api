@@ -37,10 +37,14 @@ func CreateProduct(db *sql.DB, p data.Product) error {
 	return nil
 }
 
-func GetProducts(db *sql.DB, start uint64, count uint8) ([]data.Product, error) {
+func GetProducts(db *sql.DB, page uint64, count uint8) ([]data.Product, error) {
+	if page > 0 {
+		page--
+	}
+	pageOffset := page * uint64(count)
 	rows, err := db.Query(
 		"SELECT id, name, price FROM products LIMIT $1 OFFSET $2",
-		count, start)
+		count, pageOffset)
 
 	if err != nil {
 		return nil, err

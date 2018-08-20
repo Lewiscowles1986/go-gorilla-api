@@ -1,11 +1,9 @@
 package rest
 
 import (
-	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
-
-	"../data"
 )
 
 type Link struct {
@@ -14,30 +12,37 @@ type Link struct {
 	Type string `json:"type"`
 }
 
-type ProductListing struct {
-	Data   []data.Product `json:"data"`
-	Total  uint64         `json:"total"`
-	Count  uint8          `json:"count"`
-	Offset uint64         `json:"offset"`
-	Limit  uint8          `json:"limit"`
-	Links  []Link         `json:"links"`
+func AddHyperMediaLinks(links *[]Link, basePath string, page, total uint64, count uint8) {
+	pages := getPages(count, total)
+	*links = append(*links, GetPageLink(basePath, count, 1, "first", "GET"))
+	if page > 1 {
+		prevPg := page - 1
+		*links = append(*links, GetPageLink(basePath, count, prevPg, "prev", "GET"))
+	}
+	*links = append(*links, GetPageLink(basePath, count, page, "current", "GET"))
+	if page < pages {
+		nextPg := page + 1
+		*links = append(*links, GetPageLink(basePath, count, nextPg, "next", "GET"))
+	}
+	*links = append(*links, GetPageLink(basePath, count, pages, "last", "GET"))
 }
 
-type Product struct {
-	Object data.Product `json:"object"`
-	Links  []Link       `json:"links"`
+func GetPageLink(basePath string, count uint8, page uint64, name, method string) Link {
+	url := basePath + "?" + BuildListingQuery(page, count)
+	return Link{Href: url, Rel: name, Type: method}
 }
 
-func ProductListingJSONResponse(db *sql.DB, start, total uint64, count uint8, products []data.Product) ProductListing {
-	l := ProductListing{}
-	l.Data = products
-	l.Limit = count
-	l.Offset = start
-	l.Count = uint8(len(products))
-	l.Total = total
-	l.Links = append(l.Links, Link{Href: "/products", Rel: "first", Type: "GET"})
+func getPages(count uint8, total uint64) uint64 {
+	pages := total / uint64(count)
+	carry := total % uint64(count)
+	if carry != 0 {
+		pages++
+	}
+	return pages
+}
 
-	return l
+func BuildListingQuery(page uint64, count uint8) string {
+	return fmt.Sprintf("page=%d&count=%d", page, count)
 }
 
 func RespondWithError(w http.ResponseWriter, code int, message string) {

@@ -63,16 +63,16 @@ func (a *App) initializeDB() {
 }
 
 func (a *App) getProducts(w http.ResponseWriter, r *http.Request) {
-	count, start := getPagingFromRequest(r)
+	count, page := getPagingFromRequest(r)
 
-	products, err := repositories.GetProducts(a.DB, start, count)
+	products, err := repositories.GetProducts(a.DB, page, count)
 	if err != nil {
 		rest.RespondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	total := repositories.GetProductCount(a.DB)
-	l := rest.ProductListingJSONResponse(a.DB, start, total, count, products)
+	l := rest.ProductListingJSONResponse(a.DB, page, total, count, products)
 	rest.RespondWithJSON(w, http.StatusOK, l)
 }
 
@@ -160,7 +160,7 @@ func getURLQueryParam(r *http.Request, key string) string {
 
 func getPagingFromRequest(r *http.Request) (uint8, uint64) {
 	count, _ := strconv.ParseUint(getURLQueryParam(r, "count"), 10, 8)
-	start, _ := strconv.ParseUint(getURLQueryParam(r, "start"), 10, 64)
+	page, _ := strconv.ParseUint(getURLQueryParam(r, "page"), 10, 64)
 
 	if count < 1 {
 		count = 10
@@ -170,5 +170,5 @@ func getPagingFromRequest(r *http.Request) (uint8, uint64) {
 	}
 	c := uint8(count)
 
-	return c, start
+	return c, page
 }
