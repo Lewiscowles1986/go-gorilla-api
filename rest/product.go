@@ -1,8 +1,6 @@
 package rest
 
 import (
-	"database/sql"
-
 	"../data"
 )
 
@@ -20,7 +18,7 @@ type Product struct {
 	Links  []Link       `json:"links"`
 }
 
-func ProductListingJSONResponse(db *sql.DB, page, total uint64, count uint8, products []data.Product) ProductListing {
+func ProductListingJSONResponse(page, total uint64, count uint8, products []data.Product) ProductListing {
 
 	l := ProductListing{}
 	l.Data = products

@@ -72,7 +72,7 @@ func (a *App) getProducts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	total := repositories.GetProductCount(a.DB)
-	l := rest.ProductListingJSONResponse(a.DB, page, total, count, products)
+	l := rest.ProductListingJSONResponse(page, total, count, products)
 	rest.RespondWithJSON(w, http.StatusOK, l)
 }
 

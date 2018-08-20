@@ -6,6 +6,20 @@ import (
 	"net/http"
 )
 
+type Listing struct {
+	Data  []Entry `json:"data"`
+	Total uint64  `json:"total"`
+	Count uint8   `json:"count"`
+	Page  uint64  `json:"page"`
+	Limit uint8   `json:"limit"`
+	Links []Link  `json:"links"`
+}
+
+type Entry struct {
+	Object string `json:"object"`
+	Links  []Link `json:"links"`
+}
+
 type Link struct {
 	Href string `json:"href"`
 	Rel  string `json:"rel"`

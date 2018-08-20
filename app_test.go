@@ -53,7 +53,7 @@ func TestEmptyTable(t *testing.T) {
 
 	total := repositories.GetProductCount(a.DB)
 	products := make([]data.Product, 0)
-	blankListing := rest.ProductListingJSONResponse(a.DB, 0, total, 10, products)
+	blankListing := rest.ProductListingJSONResponse(0, total, 10, products)
 
 	expected, _ := json.Marshal(blankListing)
 

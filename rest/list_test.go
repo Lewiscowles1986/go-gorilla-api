@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"net/http/httptest"
 	"testing"
 )
 
@@ -96,5 +97,46 @@ func TestHyperMediaLinksLastPage(t *testing.T) {
 		links[1] != expected[1] && links[2] != expected[2] &&
 		links[3] != expected[3] && links[linksLen-1] != expected[linksLen-1] {
 		t.Errorf("Expected: %+v, Got: %+v", expected, links)
+	}
+}
+
+func TestJSONResponse(t *testing.T) {
+	rr := httptest.NewRecorder()
+	RespondWithJSON(rr, 200, "simple string")
+
+	checkCode(t, rr, 200)
+	checkHeaders(t, rr, []header{
+		header{Name: "Content-Type", Value: "application/json"}})
+
+	responseBody := rr.Body.String()
+	expectedBody := "\"simple string\""
+	if responseBody != expectedBody {
+		t.Fatalf("Expected \"%s\" response. Got \"%s\"", expectedBody, responseBody)
+	}
+}
+
+func TestErrorResponse(t *testing.T) {
+	rr := httptest.NewRecorder()
+	RespondWithError(rr, 400, "Bad Request")
+}
+
+type header struct {
+	Name  string
+	Value string
+}
+
+func checkHeaders(t *testing.T, rr *httptest.ResponseRecorder, headers []header) {
+	for _, h := range headers {
+		responseContentType := rr.Header().Get(h.Name)
+		if responseContentType != h.Value {
+			t.Fatalf("Expected \"%s\". Got \"%s\"", h.Value, responseContentType)
+		}
+	}
+}
+
+func checkCode(t *testing.T, rr *httptest.ResponseRecorder, code int) {
+	responseCode := rr.Code
+	if responseCode != code {
+		t.Fatalf("Expected %d response. Got %d", code, responseCode)
 	}
 }
