@@ -59,6 +59,9 @@ func GetPageLink(basePath string, count uint8, page uint64, name, method string)
 }
 
 func getPages(count uint8, total uint64) uint64 {
+	if total < 1 || count < 1 {
+		return 1
+	}
 	pages := total / uint64(count)
 	carry := total % uint64(count)
 	if carry != 0 {

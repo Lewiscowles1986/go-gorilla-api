@@ -43,6 +43,27 @@ func TestPagesCountTotalOddForEven(t *testing.T) {
 	}
 }
 
+func TestPagesCountTotalForOneHundredRecordsZeroCount(t *testing.T) {
+	result := getPages(uint8(0), uint64(100))
+	if result != uint64(1) {
+		t.Errorf("Expected 1 got %d", result)
+	}
+}
+
+func TestPagesCountTotalForNoRecordsFiftyCount(t *testing.T) {
+	result := getPages(uint8(50), uint64(0))
+	if result != uint64(1) {
+		t.Errorf("Expected 1 got %d", result)
+	}
+}
+
+func TestPagesCountTotalForNoRecordsZeroCount(t *testing.T) {
+	result := getPages(uint8(0), uint64(0))
+	if result != uint64(1) {
+		t.Errorf("Expected 1 got %d", result)
+	}
+}
+
 func TestGetPageLinkOutputsExpected(t *testing.T) {
 	expected := Link{Href: "/products?page=1&count=50", Rel: "something", Type: "GET"}
 	result := GetPageLink("/products", uint8(50), uint64(1), "something", "GET")
