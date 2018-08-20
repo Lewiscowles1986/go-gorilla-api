@@ -28,22 +28,15 @@ func clearTable() {
 func TestMain(m *testing.M) {
 	a = main.App{}
 
-	a.Initialize(
-		settings.Getenv("TEST_DB_TYPE", "sqlite3"),
-		settings.GetDBConnStr(
-			os.Getenv("TEST_DB_TYPE"),
-			os.Getenv("TEST_DB_USERNAME"),
-			os.Getenv("TEST_DB_PASSWORD"),
-			settings.Getenv("TEST_DB_NAME", "database")))
+	dbType := settings.Getenv("TEST_DB_TYPE", "sqlite3")
+	dbConnStr := settings.GetDBConnStr(
+		dbType,
+		os.Getenv("TEST_DB_USERNAME"),
+		os.Getenv("TEST_DB_PASSWORD"),
+		settings.Getenv("TEST_DB_NAME", ":memory:"))
+	a.Initialize(dbType, dbConnStr)
 
-	fmt.Println(
-		fmt.Sprintf("Testing with settings\n%s: %s\n\n",
-			settings.Getenv("TEST_DB_TYPE", "sqlite3"),
-			settings.GetDBConnStr(
-				os.Getenv("TEST_DB_TYPE"),
-				os.Getenv("TEST_DB_USERNAME"),
-				os.Getenv("TEST_DB_PASSWORD"),
-				settings.Getenv("TEST_DB_NAME", "database"))))
+	fmt.Printf("Testing with settings\n%s: %s\n\n", dbType, dbConnStr)
 
 	code := m.Run()
 
