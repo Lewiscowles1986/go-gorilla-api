@@ -27,6 +27,9 @@ type Link struct {
 }
 
 func AddHyperMediaLinks(links *[]Link, basePath string, page, total uint64, count uint8) {
+	if page < 1 {
+		page = 1
+	}
 	pages := getPages(count, total)
 	*links = append(*links, GetPageLink(basePath, count, 1, "first", "GET"))
 	if page > 1 {
@@ -42,6 +45,9 @@ func AddHyperMediaLinks(links *[]Link, basePath string, page, total uint64, coun
 }
 
 func ListingJSONResponse(basePath string, page, total uint64, count uint8, entries []Entry) Listing {
+	if page < 1 {
+		page = 1
+	}
 	l := Listing{}
 	l.Data = entries
 	l.Limit = count

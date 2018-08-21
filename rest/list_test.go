@@ -8,6 +8,11 @@ import (
 	"../data"
 )
 
+type header struct {
+	Name  string
+	Value string
+}
+
 func TestPagesCountTotalSingle(t *testing.T) {
 	result := getPages(uint8(1), uint64(100))
 	if result != uint64(100) {
@@ -124,6 +129,36 @@ func TestHyperMediaLinksLastPage(t *testing.T) {
 	}
 }
 
+func TestHyperMediaLinksFirstAndLastPage(t *testing.T) {
+	links := []Link{}
+	expected := []Link{
+		Link{Href: "/products?page=1&count=10", Rel: "first", Type: "GET"},
+		Link{Href: "/products?page=1&count=10", Rel: "current", Type: "GET"},
+		Link{Href: "/products?page=1&count=10", Rel: "last", Type: "GET"},
+	}
+	AddHyperMediaLinks(&links, "/products", uint64(1), uint64(0), uint8(10))
+	linksLen := len(links)
+	if linksLen != len(expected) && links[0] != expected[0] &&
+		links[1] != expected[1] && links[linksLen-1] != expected[linksLen-1] {
+		t.Errorf("Expected: %+v, Got: %+v", expected, links)
+	}
+}
+
+func TestHyperMediaLinksZeroPage(t *testing.T) {
+	links := []Link{}
+	expected := []Link{
+		Link{Href: "/products?page=1&count=10", Rel: "first", Type: "GET"},
+		Link{Href: "/products?page=1&count=10", Rel: "current", Type: "GET"},
+		Link{Href: "/products?page=1&count=10", Rel: "last", Type: "GET"},
+	}
+	AddHyperMediaLinks(&links, "/products", uint64(0), uint64(0), uint8(10))
+	linksLen := len(links)
+	if linksLen != len(expected) && links[0] != expected[0] &&
+		links[1] != expected[1] && links[linksLen-1] != expected[linksLen-1] {
+		t.Errorf("Expected: %+v, Got: %+v", expected, links)
+	}
+}
+
 func TestJSONResponse(t *testing.T) {
 	rr := httptest.NewRecorder()
 	RespondWithJSON(rr, 200, "simple string")
@@ -144,27 +179,6 @@ func TestErrorResponse(t *testing.T) {
 	RespondWithError(rr, 400, "Bad Request")
 }
 
-type header struct {
-	Name  string
-	Value string
-}
-
-func checkHeaders(t *testing.T, rr *httptest.ResponseRecorder, headers []header) {
-	for _, h := range headers {
-		responseContentType := rr.Header().Get(h.Name)
-		if responseContentType != h.Value {
-			t.Fatalf("Expected \"%s\". Got \"%s\"", h.Value, responseContentType)
-		}
-	}
-}
-
-func checkCode(t *testing.T, rr *httptest.ResponseRecorder, code int) {
-	responseCode := rr.Code
-	if responseCode != code {
-		t.Fatalf("Expected %d response. Got %d", code, responseCode)
-	}
-}
-
 func TestJSONResponseEntry(t *testing.T) {
 	rr := httptest.NewRecorder()
 	prod := data.CreateProduct("test", 9.99)
@@ -181,5 +195,29 @@ func TestJSONResponseEntry(t *testing.T) {
 		prod.GetID())
 	if responseBody != expectedBody {
 		t.Fatalf("Expected \"%s\" response. Got \"%s\"", expectedBody, responseBody)
+	}
+}
+
+func TestProductListingJSONResponseNeverHasPageLessThanOne(t *testing.T) {
+	expected := Listing{Page: 1}
+	result := ListingJSONResponse("/", uint64(0), uint64(0), uint8(10), []Entry{})
+	if expected.Page != result.Page {
+		t.Fatalf("Expected Page to be %d, Got %d.", expected.Page, result.Page)
+	}
+}
+
+func checkHeaders(t *testing.T, rr *httptest.ResponseRecorder, headers []header) {
+	for _, h := range headers {
+		responseContentType := rr.Header().Get(h.Name)
+		if responseContentType != h.Value {
+			t.Fatalf("Expected \"%s\". Got \"%s\"", h.Value, responseContentType)
+		}
+	}
+}
+
+func checkCode(t *testing.T, rr *httptest.ResponseRecorder, code int) {
+	responseCode := rr.Code
+	if responseCode != code {
+		t.Fatalf("Expected %d response. Got %d", code, responseCode)
 	}
 }

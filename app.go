@@ -179,6 +179,9 @@ func getPagingFromRequest(r *http.Request) (uint8, uint64) {
 	if count > 250 {
 		count = 250
 	}
+	if page < 1 {
+		page = 1
+	}
 	c := uint8(count)
 
 	return c, page
