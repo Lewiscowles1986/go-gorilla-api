@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/http/pprof"
 	"net/url"
 	"strconv"
 
@@ -48,6 +49,17 @@ func (a *App) initializeRoutes() {
 	a.Router.HandleFunc(productSpecificRoute, a.getProduct).Methods("GET")
 	a.Router.HandleFunc(productSpecificRoute, a.updateProduct).Methods("PUT")
 	a.Router.HandleFunc(productSpecificRoute, a.deleteProduct).Methods("DELETE")
+
+	a.Router.HandleFunc("/debug/pprof/", pprof.Index)
+	a.Router.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	a.Router.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	a.Router.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+
+	// Manually add support for paths linked to by index page at /debug/pprof/
+	a.Router.Handle("/debug/pprof/goroutine", pprof.Handler("goroutine"))
+	a.Router.Handle("/debug/pprof/heap", pprof.Handler("heap"))
+	a.Router.Handle("/debug/pprof/threadcreate", pprof.Handler("threadcreate"))
+	a.Router.Handle("/debug/pprof/block", pprof.Handler("block"))
 }
 
 func (a *App) initializeDB() {
@@ -120,6 +132,13 @@ func (a *App) getProduct(w http.ResponseWriter, r *http.Request) {
 func (a *App) updateProduct(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := data.ParseUUID(vars["id"])
+
+	_, get_err := repositories.GetProduct(a.DB, id.String())
+	if get_err != nil {
+		rest.RespondWithError(w, http.StatusNotFound, fmt.Sprintf(
+			"Product '%s' not found", id.String()))
+		return
+	}
 
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
