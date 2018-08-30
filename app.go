@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"io/ioutil"
@@ -8,7 +9,10 @@ import (
 	"net/http"
 	"net/http/pprof"
 	"net/url"
+	"os"
+	"os/signal"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
@@ -19,11 +23,13 @@ import (
 	"./rest"
 )
 
+// App - Structure for Global State
 type App struct {
 	Router *mux.Router
 	DB     *sql.DB
 }
 
+// Initialize - Setup App resources
 func (a *App) Initialize(connType, connectionString string) {
 	var err error
 	a.DB, err = sql.Open(connType, connectionString)
@@ -36,8 +42,42 @@ func (a *App) Initialize(connType, connectionString string) {
 	a.initializeRoutes()
 }
 
-func (a *App) Run(addr string) {
-	log.Fatal(http.ListenAndServe(addr, a.Router))
+// Run - Main Loop
+func (a *App) Run(addr string, wait time.Duration) {
+	srv := &http.Server{
+		Addr: addr,
+		// Good practice to set timeouts to avoid Slowloris attacks.
+		WriteTimeout: time.Second * 15,
+		ReadTimeout:  time.Second * 15,
+		IdleTimeout:  time.Second * 60,
+		Handler:      maxClientsMiddleware(a.Router, 5), // Pass our instance of gorilla/mux in.
+	}
+
+	// Run our server in a goroutine so that it doesn't block.
+	go func() {
+		log.Fatal(srv.ListenAndServe())
+	}()
+
+	c := make(chan os.Signal, 1)
+	// We'll accept graceful shutdowns when quit via SIGINT (Ctrl+C)
+	// SIGKILL, SIGQUIT or SIGTERM (Ctrl+/) will not be caught.
+	signal.Notify(c, os.Interrupt)
+
+	// Block until we receive our signal.
+	<-c
+
+	// Create a deadline to wait for.
+	ctx, cancel := context.WithTimeout(context.Background(), wait)
+	defer cancel()
+
+	// Doesn't block if no connections, but will otherwise wait
+	// until the timeout deadline.
+
+	srv.Shutdown(ctx)
+	a.DB.Close()
+
+	log.Println("shutting down")
+	os.Exit(0)
 }
 
 func (a *App) initializeRoutes() {
@@ -133,8 +173,8 @@ func (a *App) updateProduct(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := data.ParseUUID(vars["id"])
 
-	_, get_err := repositories.GetProduct(a.DB, id.String())
-	if get_err != nil {
+	_, getErr := repositories.GetProduct(a.DB, id.String())
+	if getErr != nil {
 		rest.RespondWithError(w, http.StatusNotFound, fmt.Sprintf(
 			"Product '%s' not found", id.String()))
 		return
@@ -182,6 +222,21 @@ func (a *App) deleteProduct(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rest.RespondWithJSON(w, http.StatusOK, map[string]string{"result": "success"})
+}
+
+func maxClientsMiddleware(handler http.Handler, maxClients uint16) http.Handler {
+	log.Printf("Max Clients Middleware %d", maxClients)
+	sema := make(chan struct{}, int(maxClients))
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		timeOut := time.NewTimer(time.Second * 1)
+		select {
+		case sema <- struct{}{}:
+			handler.ServeHTTP(w, r)
+			defer func() { <-sema }()
+		case <-timeOut.C:
+			rest.RespondWithError(w, http.StatusServiceUnavailable, "Too many requests")
+		}
+	})
 }
 
 func getURLQueryParam(r *http.Request, key string) string {
