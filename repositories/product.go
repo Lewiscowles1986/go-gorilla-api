@@ -8,26 +8,26 @@ import (
 
 func GetProduct(db *sql.DB, id string) (data.Product, error) {
 	return data.ParseProductData(
-		db.QueryRow("SELECT id, name, price FROM products WHERE id=$1", id))
+		db.QueryRow("SELECT id, name, price FROM products WHERE id=?", id))
 }
 
 func UpdateProduct(db *sql.DB, id string, p data.Product) error {
 	_, err :=
-		db.Exec("UPDATE products SET name=$1, price=$2 WHERE id=$3",
+		db.Exec("UPDATE products SET name=?, price=? WHERE id=?",
 			p.GetName(), p.GetPrice(), id)
 
 	return err
 }
 
 func DeleteProduct(db *sql.DB, id string) error {
-	_, err := db.Exec("DELETE FROM products WHERE id=$1", id)
+	_, err := db.Exec("DELETE FROM products WHERE id=?", id)
 
 	return err
 }
 
 func CreateProduct(db *sql.DB, p data.Product) error {
 	_, err := db.Exec(
-		"INSERT INTO products(id, name, price) VALUES($1, $2, $3)",
+		"INSERT INTO products(id, name, price) VALUES(?, ?, ?)",
 		p.GetID(), p.GetName(), p.GetPrice())
 
 	if err != nil {
@@ -43,7 +43,7 @@ func GetProducts(db *sql.DB, page uint64, count uint8) ([]data.Product, error) {
 	}
 	pageOffset := page * uint64(count)
 	rows, err := db.Query(
-		"SELECT id, name, price FROM products LIMIT $1 OFFSET $2",
+		"SELECT id, name, price FROM products LIMIT ? OFFSET ?",
 		count, pageOffset)
 
 	if err != nil {
