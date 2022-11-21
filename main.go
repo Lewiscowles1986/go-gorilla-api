@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"./settings"
+	"github.com/Lewiscowles1986/go-gorilla-api/settings"
 )
 
 func main() {

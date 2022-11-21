@@ -3,7 +3,7 @@ package rest
 import (
 	"testing"
 
-	"../data"
+	"github.com/Lewiscowles1986/go-gorilla-api/data"
 )
 
 func TestProductListingJSONResponse(t *testing.T) {

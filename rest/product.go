@@ -1,7 +1,7 @@
 package rest
 
 import (
-	"../data"
+	"github.com/Lewiscowles1986/go-gorilla-api/data"
 )
 
 type ProductListing struct {

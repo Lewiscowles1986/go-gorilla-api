@@ -24,7 +24,7 @@ type Product interface {
 
 func (p *product) GetID() string {
 	if len(p.ID) != 36 {
-		p.ID = uuid.Must(uuid.NewV4()).String()
+		p.ID = uuid.Must(uuid.NewV4(), nil).String()
 	}
 	return p.ID
 }
@@ -47,7 +47,7 @@ func (p *product) SetPrice(newPrice float64) {
 
 func CreateProduct(name string, price float64) Product {
 	p := &product{}
-	p.ID = uuid.Must(uuid.NewV4()).String()
+	p.ID = uuid.Must(uuid.NewV4(), nil).String()
 	p.Name = name
 	p.Price = price
 	return p

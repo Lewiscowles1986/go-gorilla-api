@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"./data"
-	"./repositories"
+	"github.com/Lewiscowles1986/go-gorilla-api/data"
+	"github.com/Lewiscowles1986/go-gorilla-api/repositories"
 )
 
 var response *http.Response

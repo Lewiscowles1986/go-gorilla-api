@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"../data"
+	"github.com/Lewiscowles1986/go-gorilla-api/data"
 )
 
 type header struct {

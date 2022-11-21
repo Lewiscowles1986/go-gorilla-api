@@ -3,7 +3,7 @@ package repositories
 import (
 	"database/sql"
 
-	"../data"
+	"github.com/Lewiscowles1986/go-gorilla-api/data"
 )
 
 func GetProduct(db *sql.DB, id string) (data.Product, error) {

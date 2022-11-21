@@ -11,11 +11,11 @@ import (
 
 	"github.com/satori/go.uuid"
 
-	"."
-	"./data"
-	"./repositories"
-	"./rest"
-	"./settings"
+	"github.com/Lewiscowles1986/go-gorilla-api"
+	"github.com/Lewiscowles1986/go-gorilla-api/data"
+	"github.com/Lewiscowles1986/go-gorilla-api/repositories"
+	"github.com/Lewiscowles1986/go-gorilla-api/rest"
+	"github.com/Lewiscowles1986/go-gorilla-api/settings"
 )
 
 var a main.App

@@ -18,9 +18,9 @@ import (
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 
-	"./data"
-	"./repositories"
-	"./rest"
+	"github.com/Lewiscowles1986/go-gorilla-api/data"
+	"github.com/Lewiscowles1986/go-gorilla-api/repositories"
+	"github.com/Lewiscowles1986/go-gorilla-api/rest"
 )
 
 // App - Structure for Global State
