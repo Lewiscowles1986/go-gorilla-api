@@ -3,6 +3,7 @@ package rest
 import (
 	"fmt"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/Lewiscowles1986/go-gorilla-api/data"
@@ -165,9 +166,9 @@ func TestJSONResponse(t *testing.T) {
 
 	checkCode(t, rr, 200)
 	checkHeaders(t, rr, []header{
-		header{Name: "Content-Type", Value: "application/json"}})
+		header{Name: "Content-Type", Value: "application/json; charset=utf-8"}})
 
-	responseBody := rr.Body.String()
+	responseBody := strings.TrimSpace(rr.Body.String())
 	expectedBody := "\"simple string\""
 	if responseBody != expectedBody {
 		t.Fatalf("Expected \"%s\" response. Got \"%s\"", expectedBody, responseBody)
@@ -187,9 +188,9 @@ func TestJSONResponseEntry(t *testing.T) {
 
 	checkCode(t, rr, 200)
 	checkHeaders(t, rr, []header{
-		header{Name: "Content-Type", Value: "application/json"}})
+		header{Name: "Content-Type", Value: "application/json; charset=utf-8"}})
 
-	responseBody := rr.Body.String()
+	responseBody := strings.TrimSpace(rr.Body.String())
 	expectedBody := fmt.Sprintf(
 		`{"object":{"id":"%s","name":"test","price":9.99},"links":null}`,
 		prod.GetID())

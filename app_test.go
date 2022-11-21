@@ -1,4 +1,4 @@
-package main_test
+package main
 
 import (
 	"bytes"
@@ -9,16 +9,15 @@ import (
 	"os"
 	"testing"
 
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 
-	"github.com/Lewiscowles1986/go-gorilla-api"
 	"github.com/Lewiscowles1986/go-gorilla-api/data"
 	"github.com/Lewiscowles1986/go-gorilla-api/repositories"
 	"github.com/Lewiscowles1986/go-gorilla-api/rest"
 	"github.com/Lewiscowles1986/go-gorilla-api/settings"
 )
 
-var a main.App
+var a App
 
 func clearTable() {
 	a.DB.Exec("DELETE FROM products")
@@ -26,7 +25,7 @@ func clearTable() {
 }
 
 func TestMain(m *testing.M) {
-	a = main.App{}
+	a = App{}
 
 	dbType := settings.Getenv("TEST_DB_TYPE", "sqlite3")
 	dbConnStr := settings.GetDBConnStr(
@@ -56,7 +55,7 @@ func TestEmptyTable(t *testing.T) {
 	blankListing := rest.ListingJSONResponse("/products", 0, total, 10,
 		rest.ProductsToEntries(products))
 
-	expected, _ := json.Marshal(blankListing)
+	expected, _ := data.JSONMarshal(blankListing)
 
 	checkResponseCode(t, http.StatusOK, response.Code)
 
@@ -76,7 +75,7 @@ func TestEmptyTableLargeCount(t *testing.T) {
 	blankListing := rest.ListingJSONResponse("/products", 0, total, 250,
 		rest.ProductsToEntries(products))
 
-	expected, _ := json.Marshal(blankListing)
+	expected, _ := data.JSONMarshal(blankListing)
 
 	checkResponseCode(t, http.StatusOK, response.Code)
 
@@ -134,7 +133,7 @@ func TestGetNonExistentProduct(t *testing.T) {
 	clearTable()
 
 	req, _ := http.NewRequest("GET", fmt.Sprintf("/product/%s",
-		uuid.Must(uuid.NewV4()).String()), nil)
+		uuid.Must(uuid.NewV4(), nil).String()), nil)
 	response := executeRequest(req)
 
 	checkResponseCode(t, http.StatusNotFound, response.Code)

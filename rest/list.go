@@ -1,10 +1,10 @@
 package rest
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/Lewiscowles1986/go-gorilla-api/data"
 )
 
 type Listing struct {
@@ -85,18 +85,9 @@ func RespondWithError(w http.ResponseWriter, code int, message string) {
 	RespondWithJSON(w, code, map[string]string{"error": message})
 }
 
-func JSONMarshal(t interface{}) ([]byte, error) {
-    buffer := &bytes.Buffer{}
-    encoder := json.NewEncoder(buffer)
-    encoder.SetEscapeHTML(false)
-    err := encoder.Encode(t)
-    return buffer.Bytes(), err
-}
-
 func RespondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
-	response, _ := JSONMarshal(payload)
+	response, _ := data.JSONMarshal(payload)
 
-	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(code)
 	w.Write(response)
