@@ -15,3 +15,6 @@
 *.db
 *.sqlite
 databas*
+
+main
+main.exe
