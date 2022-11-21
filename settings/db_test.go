@@ -21,8 +21,8 @@ func TestSqlite3AnyOtherFile(t *testing.T) {
 }
 
 func TestPostGresDB(t *testing.T) {
-	expected := "user=username password=password dbname=someOtherDbName"
-	result := GetDBConnStr("postgresql", "username", "password", "someOtherDbName")
+	expected := "user=username password=password dbname=someOtherDbName sslmode=disable"
+	result := GetDBConnStr("postgres", "username", "password", "someOtherDbName")
 	if result != expected {
 		t.Errorf("postgres connection string resolution failed. "+
 			"Expected: '%s'. Received: '%s'", expected, result)
